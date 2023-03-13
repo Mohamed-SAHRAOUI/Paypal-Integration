@@ -1,6 +1,6 @@
 package com.payment.PaypalIntegration.Controllers;
 
-import com.payment.PaypalIntegration.Dto.ConfirmPaymentBody;
+import com.payment.PaypalIntegration.Dto.ConfirmPaymentBodyDto;
 import com.payment.PaypalIntegration.Service.PaypalService;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -38,9 +38,9 @@ public class OrderController {
     }
 
     @PostMapping("/orders/{orderId}/confirm-payment")
-    public ResponseEntity<String> confirmPayment(@PathVariable String orderId, @RequestBody ConfirmPaymentBody confirmPaymentBody) throws Exception {
+    public ResponseEntity<String> confirmPayment(@PathVariable String orderId, @RequestBody ConfirmPaymentBodyDto confirmPaymentBodyDto) throws Exception {
         try {
-            ResponseEntity<String> response = paypalService.confirmPayment(orderId, confirmPaymentBody);
+            ResponseEntity<String> response = paypalService.confirmPayment(orderId, confirmPaymentBodyDto);
             return response;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());

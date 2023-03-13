@@ -1,6 +1,6 @@
 package com.payment.PaypalIntegration.Dto;
 
-public class ConfirmPaymentBody {
+public class ConfirmPaymentBodyDto {
     private PaymentSourceDto payment_source;
 
     public PaymentSourceDto getPayment_source() {

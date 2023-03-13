@@ -1,12 +1,11 @@
 package com.payment.PaypalIntegration.Service;
 
-import com.payment.PaypalIntegration.Dto.ConfirmPaymentBody;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.payment.PaypalIntegration.Dto.ConfirmPaymentBodyDto;
+import com.payment.PaypalIntegration.Dto.OrderResponseDto;
+import com.payment.PaypalIntegration.Entity.Order;
+import com.payment.PaypalIntegration.Repository.OrderRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,108 +20,6 @@ import java.util.Base64;
 
 @Service
 public class PaypalService {
-//    @Value("${paypal.clientId}")
-//    private String clientId;
-//
-//    @Value("${paypal.secret}")
-//    private String secret;
-//
-//    @Value("${paypal.base}")
-//    private String base;
-//
-//    @Value("${paypal.confirmOrder}")
-//    private String confirmOrderUrl;
-//
-//    private final RestTemplate restTemplate;
-//
-//    public PaypalService() {
-//        restTemplate = new RestTemplate();
-//    }
-//
-//
-//    public String createOrder() throws Exception {
-//        String purchaseAmount = "45.00"; // TODO: pull price from a database
-//        String accessToken = generateAccessToken();
-//        String url = base + "/v2/checkout/orders";
-//        JSONObject body = new JSONObject();
-//        body.put("intent", "CAPTURE");
-//        JSONArray purchaseUnits = new JSONArray();
-//        JSONObject purchaseUnit = new JSONObject();
-//        JSONObject amount = new JSONObject();
-//        amount.put("currency_code", "USD");
-//        amount.put("value", purchaseAmount);
-//        purchaseUnit.put("amount", amount);
-//        purchaseUnits.put(purchaseUnit);
-//        body.put("purchase_units", purchaseUnits);
-//        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-//        HttpPost request = new HttpPost(url);
-//        StringEntity params = new StringEntity(body.toString());
-//        request.addHeader("content-type", "application/json");
-//        request.addHeader("Authorization", "Bearer " + accessToken);
-//        request.setEntity(params);
-//        CloseableHttpResponse response = httpClient.execute(request);
-//        return handleResponseWithHttpResponse(response);
-//    }
-//
-//    private String generateAccessToken() throws Exception {
-//        String auth = Base64.getEncoder().encodeToString((clientId + ":" + secret).getBytes("UTF-8"));
-//        String url = base + "/v1/oauth2/token";
-//        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-//        HttpPost request = new HttpPost(url);
-//        request.addHeader("Authorization", "Basic " + auth);
-//        request.addHeader("content-type", "application/x-www-form-urlencoded");
-//        request.setEntity(new StringEntity("grant_type=client_credentials"));
-//        CloseableHttpResponse response = httpClient.execute(request);
-//        JSONObject jsonData = new JSONObject(EntityUtils.toString(response.getEntity()));
-//        return jsonData.getString("access_token");
-//    }
-//
-//    private String handleResponseWithHttpResponse(CloseableHttpResponse response) throws Exception {
-//        int status = response.getStatusLine().getStatusCode();
-//        if (status == 200 || status == 201) {
-//            String responseString = EntityUtils.toString(response.getEntity());
-//            JSONObject jsonResponse = new JSONObject(responseString);
-//            return jsonResponse.toString();
-//        } else {
-//            String errorMessage = EntityUtils.toString(response.getEntity());
-//            throw new Exception(errorMessage);
-//        }
-//    }
-//
-//    public String capturePayment(String orderId) throws Exception {
-//        String accessToken = generateAccessToken();
-//        String url = base + "/v2/checkout/orders/" + orderId + "/capture";
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//        headers.setBearerAuth(accessToken);
-//
-//        HttpEntity<String> request = new HttpEntity<>(null, headers);
-//        ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-//
-//        return handleResponseWithResponseEntity(response);
-//    }
-//
-//    private String handleResponseWithResponseEntity(ResponseEntity<String> response) throws Exception {
-//        if (response.getStatusCode() == HttpStatus.OK || response.getStatusCode() == HttpStatus.CREATED) {
-//            return response.getBody();
-//        }
-//
-//        String errorMessage = response.getBody();
-//        throw new Exception(errorMessage);
-//    }
-//
-//    public ResponseEntity<String> confirmPayment(String orderId, ConfirmPaymentBody confirmPaymentBody) throws Exception {
-//        String url = confirmOrderUrl + orderId +"/confirm-payment-source";
-//
-//        String accessToken = generateAccessToken();
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.set("Authorization", "Bearer " + accessToken);
-//
-//        HttpEntity<ConfirmPaymentBody> request = new HttpEntity<>(confirmPaymentBody, headers);
-//        ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-//
-//        return response;
-//    }
     @Value("${paypal.clientId}")
     private String clientId;
 
@@ -136,9 +33,13 @@ public class PaypalService {
     private String confirmOrderUrl;
 
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+    private final OrderRepository orderRepository;
 
-    public PaypalService(RestTemplateBuilder restTemplateBuilder) {
+    public PaypalService(RestTemplateBuilder restTemplateBuilder, OrderRepository orderRepository, ObjectMapper objectMapper) {
         this.restTemplate = restTemplateBuilder.build();
+        this.orderRepository = orderRepository;
+        this.objectMapper = objectMapper;
     }
 
     public String createOrder() throws Exception {
@@ -163,7 +64,17 @@ public class PaypalService {
         HttpEntity<String> request = new HttpEntity<>(body.toString(), headers);
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
+        OrderResponseDto orderResponseDto = objectMapper.readValue(response.getBody(), OrderResponseDto.class);
+        Order order = new Order();
+        order.setPaypalOrderId(orderResponseDto.getId());
+        order.setPaypalOrderStatus(orderResponseDto.getStatus());
+        saveOrder(order);
+
         return handleResponse(response);
+    }
+
+    public void saveOrder(Order order) {
+        orderRepository.save(order);
     }
 
     public String capturePayment(String orderId) throws Exception {
@@ -176,10 +87,19 @@ public class PaypalService {
         HttpEntity<String> request = new HttpEntity<>(null, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
+        updateOrder(response, orderId);
+
         return handleResponse(response);
     }
 
-    public ResponseEntity<String> confirmPayment(String orderId, ConfirmPaymentBody confirmPaymentBody) throws Exception {
+    private void updateOrder(ResponseEntity<String> response, String orderId) throws JsonProcessingException {
+        OrderResponseDto orderResponseDto = objectMapper.readValue(response.getBody(), OrderResponseDto.class);
+        Order order = orderRepository.findByPaypalOrderId(orderId);
+        order.setPaypalOrderStatus(orderResponseDto.getStatus());
+        saveOrder(order);
+    }
+
+    public ResponseEntity<String> confirmPayment(String orderId, ConfirmPaymentBodyDto confirmPaymentBodyDto) throws Exception {
         String url = confirmOrderUrl + orderId + "/confirm-payment-source";
 
         String accessToken = generateAccessToken();
@@ -187,8 +107,10 @@ public class PaypalService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(accessToken);
 
-        HttpEntity<ConfirmPaymentBody> request = new HttpEntity<>(confirmPaymentBody, headers);
+        HttpEntity<ConfirmPaymentBodyDto> request = new HttpEntity<>(confirmPaymentBodyDto, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+
+        updateOrder(response, orderId);
 
         return response;
     }

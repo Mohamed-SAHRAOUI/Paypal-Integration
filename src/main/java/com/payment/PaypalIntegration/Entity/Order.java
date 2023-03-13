@@ -15,5 +15,29 @@ public class Order {
     private String paypalOrderId;
 
     @Column(name = "paypal_order_status")
-    private String paypalOrderStatus;
+    private OrderStatus paypalOrderStatus;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getPaypalOrderId() {
+        return paypalOrderId;
+    }
+
+    public void setPaypalOrderId(String paypalOrderId) {
+        this.paypalOrderId = paypalOrderId;
+    }
+
+    public OrderStatus getPaypalOrderStatus() {
+        return paypalOrderStatus;
+    }
+
+    public void setPaypalOrderStatus(OrderStatus paypalOrderStatus) {
+        this.paypalOrderStatus = paypalOrderStatus;
+    }
 }
