@@ -1,10 +1,9 @@
 package com.payment.PaypalIntegration.Repository;
 
-import com.payment.PaypalIntegration.Entity.Order;
+import com.payment.PaypalIntegration.Entity.BillingAddress;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
-    Order findByPaypalOrderId(String paypalOrderId);
+public interface BillingAddressRepository extends JpaRepository<BillingAddress, Long> {
 }

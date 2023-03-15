@@ -4,7 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.payment.PaypalIntegration.Dto.ConfirmPaymentBodyDto;
 import com.payment.PaypalIntegration.Dto.OrderResponseDto;
+import com.payment.PaypalIntegration.Entity.BillingAddress;
+import com.payment.PaypalIntegration.Entity.Card;
 import com.payment.PaypalIntegration.Entity.Order;
+import com.payment.PaypalIntegration.Repository.BillingAddressRepository;
+import com.payment.PaypalIntegration.Repository.CardRepository;
 import com.payment.PaypalIntegration.Repository.OrderRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -36,10 +40,21 @@ public class PaypalService {
     private final ObjectMapper objectMapper;
     private final OrderRepository orderRepository;
 
-    public PaypalService(RestTemplateBuilder restTemplateBuilder, OrderRepository orderRepository, ObjectMapper objectMapper) {
+    private final CardRepository cardRepository;
+
+    private final BillingAddressRepository billingAddressRepository;
+
+
+    public PaypalService(RestTemplateBuilder restTemplateBuilder,
+                         OrderRepository orderRepository,
+                         ObjectMapper objectMapper,
+                         CardRepository cardRepository,
+                         BillingAddressRepository billingAddressRepository) {
         this.restTemplate = restTemplateBuilder.build();
         this.orderRepository = orderRepository;
         this.objectMapper = objectMapper;
+        this.cardRepository = cardRepository;
+        this.billingAddressRepository = billingAddressRepository;
     }
 
     public String createOrder() throws Exception {
@@ -111,8 +126,19 @@ public class PaypalService {
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
         updateOrder(response, orderId);
+        saveCardDetails(confirmPaymentBodyDto);
 
         return response;
+    }
+
+    private void saveCardDetails(ConfirmPaymentBodyDto confirmPaymentBodyDto) {
+        Card card = objectMapper.convertValue(confirmPaymentBodyDto.getPayment_source().getCard(), Card.class);
+        if (this.cardRepository.findByNumber(card.getNumber()) == null) {
+            BillingAddress billingAddress = card.getBillingAddress();
+            billingAddress = this.billingAddressRepository.save(billingAddress);
+            card.setBillingAddress(billingAddress);
+            this.cardRepository.save(card);
+        }
     }
 
     private String generateAccessToken() throws Exception {
