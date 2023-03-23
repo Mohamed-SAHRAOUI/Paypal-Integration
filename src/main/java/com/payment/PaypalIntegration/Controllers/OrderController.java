@@ -4,6 +4,7 @@ import com.payment.PaypalIntegration.Dto.ConfirmPaymentBodyDto;
 import com.payment.PaypalIntegration.Service.PaypalService;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
@@ -38,12 +39,11 @@ public class OrderController {
     }
 
     @PostMapping("/orders/{orderId}/confirm-payment")
-    public ResponseEntity<String> confirmPayment(@PathVariable String orderId, @RequestBody ConfirmPaymentBodyDto confirmPaymentBodyDto) throws Exception {
+    public ResponseEntity<String> confirmPayment(@PathVariable String orderId, @RequestBody ConfirmPaymentBodyDto confirmPaymentBodyDto) {
         try {
-            ResponseEntity<String> response = paypalService.confirmPayment(orderId, confirmPaymentBodyDto);
-            return response;
+            return paypalService.confirmPayment(orderId, confirmPaymentBodyDto);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(((HttpClientErrorException.UnprocessableEntity) e).getStatusCode()).body(e.getMessage());
         }
     }
 
