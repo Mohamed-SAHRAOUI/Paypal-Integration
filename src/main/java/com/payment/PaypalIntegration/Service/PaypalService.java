@@ -21,6 +21,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Base64;
+import java.util.Date;
 
 @Service
 public class PaypalService {
@@ -59,6 +60,7 @@ public class PaypalService {
 
     public String createOrder() throws Exception {
         String purchaseAmount = "45.00"; // TODO: pull price from a database
+        String currencyCode = "USD";
         String accessToken = generateAccessToken();
         String url = base + "/v2/checkout/orders";
         HttpHeaders headers = new HttpHeaders();
@@ -70,7 +72,7 @@ public class PaypalService {
         JSONArray purchaseUnits = new JSONArray();
         JSONObject purchaseUnit = new JSONObject();
         JSONObject amount = new JSONObject();
-        amount.put("currency_code", "USD");
+        amount.put("currency_code", currencyCode);
         amount.put("value", purchaseAmount);
         purchaseUnit.put("amount", amount);
         purchaseUnits.put(purchaseUnit);
@@ -83,6 +85,9 @@ public class PaypalService {
         Order order = new Order();
         order.setPaypalOrderId(orderResponseDto.getId());
         order.setPaypalOrderStatus(orderResponseDto.getStatus());
+        order.setCreateDate(new Date());
+        order.setAmountValue(purchaseAmount);
+        order.setCurrencyCode(currencyCode);
         saveOrder(order);
 
         return handleResponse(response);
