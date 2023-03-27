@@ -107,16 +107,17 @@ public class PaypalService {
         HttpEntity<String> request = new HttpEntity<>(null, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
-        updateOrder(response, orderId);
+        Order order = updateOrder(response, orderId);
+        saveOrder(order);
 
         return handleResponse(response);
     }
 
-    private void updateOrder(ResponseEntity<String> response, String orderId) throws JsonProcessingException {
+    private Order updateOrder(ResponseEntity<String> response, String orderId) throws JsonProcessingException {
         OrderResponseDto orderResponseDto = objectMapper.readValue(response.getBody(), OrderResponseDto.class);
         Order order = orderRepository.findByPaypalOrderId(orderId);
         order.setPaypalOrderStatus(orderResponseDto.getStatus());
-        saveOrder(order);
+        return order;
     }
 
     public ResponseEntity<String> confirmPayment(String orderId, ConfirmPaymentBodyDto confirmPaymentBodyDto) throws Exception {
@@ -130,7 +131,9 @@ public class PaypalService {
         HttpEntity<ConfirmPaymentBodyDto> request = new HttpEntity<>(confirmPaymentBodyDto, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
-        updateOrder(response, orderId);
+        Order order = updateOrder(response, orderId);
+        order.setPayWithCreditCard(true);
+        saveOrder(order);
         saveCardDetails(confirmPaymentBodyDto);
 
         return response;

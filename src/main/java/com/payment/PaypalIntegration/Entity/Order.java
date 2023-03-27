@@ -27,6 +27,9 @@ public class Order {
     @Column(name = "amount_value")
     private String amountValue;
 
+    @Column(name = "pay_with_credit_card")
+    private boolean payWithCreditCard = false;
+
     public Long getId() {
         return id;
     }
@@ -73,5 +76,12 @@ public class Order {
 
     public void setAmountValue(String amountValue) {
         this.amountValue = amountValue;
+    }
+    public boolean isPayWithCreditCard() {
+        return payWithCreditCard;
+    }
+
+    public void setPayWithCreditCard(boolean payWithCreditCard) {
+        this.payWithCreditCard = payWithCreditCard;
     }
 }
