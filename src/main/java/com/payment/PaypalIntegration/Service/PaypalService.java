@@ -13,7 +13,6 @@ import com.payment.PaypalIntegration.Repository.OrderRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -46,12 +45,12 @@ public class PaypalService {
     private final BillingAddressRepository billingAddressRepository;
 
 
-    public PaypalService(RestTemplateBuilder restTemplateBuilder,
+    public PaypalService(RestTemplate restTemplate,
                          OrderRepository orderRepository,
                          ObjectMapper objectMapper,
                          CardRepository cardRepository,
                          BillingAddressRepository billingAddressRepository) {
-        this.restTemplate = restTemplateBuilder.build();
+        this.restTemplate = restTemplate;
         this.orderRepository = orderRepository;
         this.objectMapper = objectMapper;
         this.cardRepository = cardRepository;
@@ -149,7 +148,7 @@ public class PaypalService {
         }
     }
 
-    private String generateAccessToken() throws Exception {
+    public String generateAccessToken() throws Exception {
         String auth = Base64.getEncoder().encodeToString((clientId + ":" + secret).getBytes("UTF-8"));
         String url = base + "/v1/oauth2/token";
 
