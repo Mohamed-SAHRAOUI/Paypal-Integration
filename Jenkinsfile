@@ -3,6 +3,10 @@ pipeline {
 
   stages {
 
+    tools {
+      maven '3.9.3'
+    }
+
     stage("build"){
       steps {
         echo 'building the app..'
