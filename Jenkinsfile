@@ -1,10 +1,6 @@
 pipeline {
   agent any
 
-  environment {
-    PATH = "$PATH:/opt/java/openjdk/bin"
-  }
-
   stages {
 
     stage("build"){
@@ -14,8 +10,9 @@ pipeline {
     }
     stage('SonarQube Analysis') {
             steps {
+                    def scannerHome = tool "sonarQube"
                     withSonarQubeEnv("sonarQube") {
-                      sh "mvn sonar:sonar"
+                      sh "${scannerHome}/bin/sonar-scanne
                       //   sh "${scannerHome}/bin/sonar-scanner \
                       // -Dsonar.projectKey=test \
                       // -Dsonar.host.url=http://192.168.253.1:9000 \
