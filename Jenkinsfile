@@ -13,10 +13,9 @@ pipeline {
                     def scannerHome = tool "sonarQube"
                     withSonarQubeEnv("sonarQube") {
                       sh "${scannerHome}/bin/sonar-scanne
-                      //   sh "${scannerHome}/bin/sonar-scanner \
-                      // -Dsonar.projectKey=test \
-                      // -Dsonar.host.url=http://192.168.253.1:9000 \
-                      // -Dsonar.login=sqp_78715bc215024df004b4ac2e89e8a9579fc01c52"
+                      -Dsonar.projectKey=test \
+                      -Dsonar.host.url=http://localhost:9000 \
+                      -Dsonar.login=sqp_09447f0697ea54e39e8c13fdf4ca8f567fe8b757"
                 }
             }
         }
