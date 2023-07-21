@@ -1,9 +1,6 @@
 pipeline {
   agent any
 
-  tools {
-      mvn '3.9.3'
-    }
 
   stages {
 
