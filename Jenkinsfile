@@ -12,12 +12,6 @@ pipeline {
         echo 'building the app..'
       }
     }
-
-    stage('SonarQube analysis') {
-      steps {
-        sh 'mvn --version'
-    }
-    }
     
     stage("test"){
       steps {
